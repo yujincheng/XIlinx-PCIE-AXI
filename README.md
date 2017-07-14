@@ -1,163 +1,3 @@
-
-# 文章结构
-
-Overleaf链接：https://www.overleaf.com/8702087qghmbvdwbzjj
-
--[ ] 图不全
-
-
--[ ] 缺部分参考文献
--[ ] 实验结果
-
-## 1Intro
-
-余
-
-##2 Background
-余
-
-##3 System design
-余
-
-###3.1 Overview
-
-###3.2 Computation
-
-###3.3 Buffer
-
-###3.4 Control&instructions
-## 1Intro
-余
-## 2 Background
-余
-## 3 System design
-余
-### 3.1 Overview
-### 3.2 Computation
-### 3.3 Buffer
-### 3.4 Control&instructions
-
-
-## 4 Scheduling
-### 4.1 Cross layer introduction
-余，胡
-
-
-### 4.2Network split
-
-- [ ] 给我们的图取一个吊炸天的名字
-
-### 4.3compiler design
-
-- 数据排布方案
-
-  - 把BRAM当作一个整体，暂不考虑其内部
-  - 资源分配方案
-    数据在BRAM与DDR中如何流动
-    layer data flow
-    对应code/scheduler/kernelsim.py
-
-- 算法资源消耗分析
-
-  - 在本节中提出BRAM内具体的存储结构，循环队列等
-
-  - 每一层要花多少memory，包括features, weights, bias
-
-    与上一节的Check函数相关
-
-    对应code/scheduler/split.py
-
-- 指令调度（七层循环）
-
-  - 具体如何生成指令，对应code/scheduler/inst.py
-  - 伪代码
-  - ​
-
-## 5 Experiments
-
-余，胡，。。
-
-##6 Related work
-妃
-
-## 7 Conclusion
-
-
-
-### 4.2 Network split
-胡
-### 4.3 compiler design
-胡
-## 5 Experiments
-余，胡，。。
-## 6 Related work
-妃
-## 7 Conclusion
-
-汪
-
-# 指令描述
-
-## data from ddr
-
-inst_dfc_st_mac,inst_dfc_data_st_addr,inst_dfc_ddr_st_addr,inst_dfc_data_ddr_byte,inst_dfc_data_width,inst_type
-
-1_000000_00000000_000440_000011_3
-
-inst_type:3 代表是数据从DDR搬运到片上的操作
-
-inst_dfc_data_width: 0x000011 代表 line_width = 0x11 每一行有 17x4 = 68 个像素。 
-
-inst_dfc_data_ddr_byte : 0x000440 代表DDR中数据的长度，可以简单理解成。 0x000011* 8* 8
-
-inst_dfc_ddr_st_addr：0x00000000 代表DDR对应数据的起始地址
-
-inst_dfc_data_st_addr: 0x000000 代表边上Buffer Pool对应的起始地址
-
-inst_dfc_st_mac: 1 代表，Buffer Pool 中选择整列的其实行数，1代表写入的行数为 1,2 行。0 代表0,1行。3 代表 3,0行。
-
-## data  to ddr
-
-该指令和data from DDR完全一致，唯独inst_type=4
-
-1_000000_00000000_000440_000011_4
-
-## data to weight buffer
-
-inst_wfc_wb_st_addr,inst_wfc_ddr_st_addr,inst_wfc_weight_ddr_byte,inst_wfc_weight_num,inst_type
-
-000000_00000000_000480_000002_1
-
-inst_type = 1 代表数据为buffer指令
-
-inst_wfc_weight_num = 2 代表对于 X_MESH x X_PE 个 weight buffer 每个传输完整的 2 个weights，一共传输 2xX_MESHxX_PEx9 个数据
-
-inst_wfc_weight_ddr_byte = 0x480 代表传输DDR 传输数据为0x480byte 可以简单理解成 0x2xX_MESHxX_PEx9 = 1152 = 0x480
-
-inst_wfc_ddr_st_addr = 0x00000000 代表的DDR起始地址
-
-inst_wfc_wb_st_addr = 0x000000 代表每一个 weight buffer 的起始地址
-
-## data to bias buffer
-
-inst_bfc_bb_st_addr,inst_bfc_ddr_st_addr,inst_bfc_bias_ddr_byte,inst_bfc_bias_num,inst_type
-
-000000_00000000_000020_000001_2
-
-inst_type = 2
-
-inst_bfc_bias_num = 1 代表对 X_PE 个bias buffer每个传输1gebias
-
-inst_bfc_bias_ddr_byte = 0x20 考虑到数据对齐和硬件限制，这里inst_bfc_bias_ddr_byte = inst_bfc_bias_num * 32
-
-inst_bfc_ddr_st_addr 代表 DDR 中数据的地址
-
-inst_bfc_bb_st_addr 代表传输到片上的地址
-
-## 计算指令
-计算指令是我们这个设计的核心指令
-
-
 # 实验总结
 
 ## AXI 总线总结
@@ -241,6 +81,13 @@ PCIE 使用xilinx 官方IP 以及配套的驱动程序。
 驱动程序下载:
 
 [xilinx wiki AR#65444](https://www.xilinx.com/support/answers/65444.html)
+按照驱动程序中的readme编译，driver文件夹和tests文件夹。
+
+tests 文件夹中
+1.  ./load_driver 是加载驱动程序
+2.  ./dma_from_device 是从PCIE的AXI接口读数据到上位机，对应device选择 /dev/xdma0_c2h_0
+3.  ./dma_to_device 是从PCIE的AXI接口写数据到板子上，对应device选择 /dev/xdma0_h2c_0
+4.  ./reg_rw 是操作寄存器，一般操作AXI_LITE接口或读或写，对应device选择 /dev/xdma0_user
 
 PCIE 配置：
 
